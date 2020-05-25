@@ -164,19 +164,19 @@ sjPlot::plot_model(mod,
 sjPlot:: tab_model(mod,show.re.var= TRUE, 
                    dv.labels= "Weight change over time(years)")
 effects_years <- effects::effect(term= "years", mod= mod)
-summary(effects_years)
+summary(effects_years) 
 # Save the effects values as a df:
 x_years <- as.data.frame(effects_years)
-x_years_s = x_years[1:4,]
+
 years_plot = ggplot() + 
   #2
   geom_point(data=data_ggp, aes(x = years, y = weight,group = id)) + 
   #3
-  geom_point(data=x_years_s, aes(x=years, y=fit), color="blue") +
+  geom_point(data=x_years, aes(x=years, y=fit), color="blue") +
   #4
-  geom_line(data=x_years_s, aes(x=years, y=fit), color="blue") +
+  geom_line(data=x_years, aes(x=years, y=fit), color="blue") +
   #5
-  geom_ribbon(data= x_years_s, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  geom_ribbon(data= x_years, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
   #6
   labs(x="Weight change over time(years)", y="Weight(kg)")
 
