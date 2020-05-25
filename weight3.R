@@ -60,7 +60,7 @@ data_ggp = weight_before2 %>%  mutate(id = as.character(id))
 Weight_plot = ggplot(data = data_ggp, aes(x = years, y = weight, group = id)) +
   geom_line(aes(color = id)) +
   scale_color_hue(name = "Subjects", h = c(100, 300)) +
-  ggtitle("Weight change over time (years) for patients in cohort 1 and 2")+ 
+  ggtitle("Weight changes over time (years) for patients in cohort 1 and 2")+ 
   labs(x = "Time (years)", y = "Weight (kg)")+
   theme_bw() + 
   theme(legend.position = "bottom")
@@ -94,9 +94,9 @@ mod = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2)
 summary(mod)
 sjPlot::plot_model(mod,
                    show.values = TRUE, show.p=TRUE,
-                   title ="Weight change over time (years)")
+                   title ="Weight changes over time (years)")
 sjPlot:: tab_model(mod,show.re.var= F, 
-                   dv.labels= "Weight change over time (years) in cohort 1 and 2")
+                   dv.labels= "Weight changes over time (years) in cohort 1 and 2")
 effects_years <- effects::effect(term= "years", mod= mod,xlevels = 27)
 summary(effects_years) 
 # Save the effects values as a df:
@@ -104,7 +104,7 @@ x_years <- as.data.frame(effects_years)
 x_years <- x_years[c(1,9,18,27),]
 years_plot = ggplot() + 
   #2
-  geom_point(data=data_ggp, aes(x = years, y = weight,group = id)) + 
+  geom_line(data=data_ggp, aes(x = years, y = weight,group = id)) + 
   #3
   geom_point(data=x_years, aes(x=years, y=fit), color="blue") +
   #4
@@ -112,7 +112,7 @@ years_plot = ggplot() +
   #5
   geom_ribbon(data= x_years, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
   #6
-  labs(x="Weight change over time (years) in cohort 1 and 2", y="Weight (kg)")
+  labs(x="Weight changes over time (years) in cohort 1 and 2", y="Weight (kg)")
 
 ##########
 # fit a model for cohort 1
@@ -120,9 +120,9 @@ mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c1)
 summary(mod_c1)
 sjPlot::plot_model(mod_c1,
                    show.values = TRUE, show.p=TRUE,
-                   title ="Weight change over time (years) in cohort 1")
+                   title ="Weight changes over time (years) in cohort 1")
 sjPlot:: tab_model(mod_c1,show.re.var= F, 
-                   dv.labels= "Weight change over time (years) in cohort 1")
+                   dv.labels= "Weight changes over time (years) in cohort 1")
 effects_years_c1 <- effects::effect(term= "years", mod= mod_c1,xlevels = 27)
 summary(effects_years_c1) 
 # Save the effects values as a df:
@@ -130,7 +130,7 @@ x_years_c1 <- as.data.frame(effects_years)
 x_years_c1 <- x_years_c1[c(1,9,18,27),]
 years_plot_c1 = ggplot() + 
   #2
-  geom_point(data=weight_before2_c1, aes(x = years, y = weight,group = id)) + 
+  geom_line(data=weight_before2_c1, aes(x = years, y = weight,group = id)) + 
   #3
   geom_point(data=x_years_c1, aes(x=years, y=fit), color="blue") +
   #4
@@ -138,7 +138,7 @@ years_plot_c1 = ggplot() +
   #5
   geom_ribbon(data= x_years_c1, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
   #6
-  labs(x="Weight change over time (years) in cohort 1", y="Weight (kg)")
+  labs(x="Weight changes over time (years) in cohort 1", y="Weight (kg)")
 
 # 
 # fit a model for cohort 2
@@ -146,9 +146,9 @@ mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c2)
 summary(mod_c2)
 sjPlot::plot_model(mod_c2,
                    show.values = TRUE, show.p=TRUE,
-                   title ="Weight change over time (years)")
+                   title ="Weight changes over time (years)")
 sjPlot:: tab_model(mod_c2,show.re.var= F, 
-                   dv.labels= "Weight change over time (years) in cohort 2")
+                   dv.labels= "Weight changes over time (years) in cohort 2")
 effects_years_c2 <- effects::effect(term= "years", mod= mod_c2,xlevels = 19)
 summary(effects_years_c2) 
 # Save the effects values as a df:
@@ -156,7 +156,7 @@ x_years_c2 <- as.data.frame(effects_years_c2)
 x_years_c2 <- x_years_c2[c(1,5,10,15,19),]
 years_plot_c2   = ggplot() + 
   #2
-  geom_point(data=weight_before2_c2, aes(x = years, y = weight,group = id)) + 
+  geom_line(data=weight_before2_c2, aes(x = years, y = weight,group = id)) + 
   #3
   geom_point(data=x_years_c2, aes(x=years, y=fit), color="blue") +
   #4
@@ -164,4 +164,18 @@ years_plot_c2   = ggplot() +
   #5
   geom_ribbon(data= x_years_c2, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
   #6
-  labs(x="Weight change over time (years) in cohort 2", y ="Weight (kg)")
+  labs(x ="Weight changes over time (years) in cohort 2", y ="Weight (kg)")
+##################
+# sensitivity analysis
+# chunk data
+
+weight_chunk = weight_before2 %>% filter(years <= 20)
+view(weight_chunk)
+weight_chunk_c1 = weight_chunk %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+weight_chunk_c2 = weight_chunk %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200) %>% 
+  filter(years <= 10)
+
