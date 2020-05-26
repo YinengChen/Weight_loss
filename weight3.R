@@ -4,8 +4,6 @@
 # We stop the regression line at 27 27 and 19
 
 library(tidyverse)
-library(readxl)
-library(nlme)
 library(ggplot2)
 
 library(lme4)
@@ -86,8 +84,11 @@ for(i in idc2){
         type = "b",xlab = "Time (years)",ylab = "weight (kg)")
 }
 
+#############################
+#     Mixed effect models   #
+#############################
 
-# FIts a model fot cohort 1 and 2
+# FIt a model fot cohort 1 and 2
 mod = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2)
 summary(mod)
 sjPlot::plot_model(mod,
@@ -138,7 +139,7 @@ years_plot_c1 = ggplot() +
   #6
   labs(x="Weight changes over time (years) in cohort 1", y="Weight (kg)")
 
-# 
+################
 # fit a model for cohort 2
 mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c2)
 summary(mod_c2)
@@ -163,10 +164,19 @@ years_plot_c2   = ggplot() +
   geom_ribbon(data= x_years_c2, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
   #6
   labs(x ="Weight changes over time (years) in cohort 2", y ="Weight (kg)")
-##################
-# sensitivity analysis
-# chunk data
 
+# A model includs "group"
+
+mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= FALSE, data=weight_before2 )
+summary(mod2)
+sjPlot:: tab_model(mod2,show.re.var= FALSE, 
+                   dv.labels= "Weight change over time (years) in cohort 1 and 2")
+
+
+#####################################
+# sensitivity analysis             #
+# chunk data                       #
+#####################################
 weight_chunk = weight_before2 %>% filter(years <= 20)
 view(weight_chunk)
 weight_chunk_c1 = weight_chunk %>% 
