@@ -86,7 +86,7 @@ weight_chunk_c2 = weight_chunk %>%
 
 ## cohort 1 and 2
 
-In this model data from both cohort 1 and 2 were used. Data collected after the 20th year of follow up were excluded.
+In this model, data from both cohort 1 and 2 were used. Data collected after the 20th year of follow up were excluded.
 
 ### Sensitivity Analysis Results
 
@@ -132,7 +132,7 @@ sjPlot:: tab_model(mod,show.re.var= F,
 
 ## cohort 1
 
-In this model data from cohort 1 were used. Data collected after the 20th year of follow up were excluded.
+In this model, data from cohort 1 were used. Data collected after the 20th year of follow up were excluded.
 
 ### Sensitivity Analysis Results
 
@@ -174,7 +174,7 @@ sjPlot:: tab_model(mod_c1,show.re.var= F,
 
 ## cohort 2
 
-In this model data from cohort 2 were used. Data collected after the 11th year of follow up were excluded.
+In this model，data from cohort 2 were used. Data collected after the 11th year of follow up were excluded.
 
 ```{r,echo = FALSE}
 # cohort 2
@@ -183,11 +183,11 @@ mod_sen_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_chunk_c2
 
 sjPlot:: tab_model(mod_sen_c2,show.re.var= F, 
                    dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 2")
-effects_years_sen_c2 <- effects::effect(term= "years", mod= mod_sen_c2)
+effects_years_sen_c2 <- effects::effect(term= "years", mod= mod_sen_c2,xlevels = 11)
 # summary(effects_years_sen_c2) 
 # Save the effects values as a df:
 x_years_sen_c2 <- as.data.frame(effects_years_sen_c2)
-
+x_years_sen_c2 = x_years_sen_c2[c(1,3,5,7,9,11),]
 years_plot_sen_c2 = ggplot() + 
   #2
   geom_line(data=weight_chunk_c2, aes(x = years, y = weight,group = id)) + 
@@ -212,7 +212,7 @@ sjPlot:: tab_model(mod_c2,show.re.var= F,
                    dv.labels= "Weight changes over time (years) in cohort 2")
 ```
 
-## Model includs group
+## Model includs the effect of cohort
 
 ```{r,echo = FALSE}
 # A model includs "group"
