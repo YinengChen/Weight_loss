@@ -1,0 +1,70 @@
+---
+title: "Weight3"
+author: "Yineng Chen"
+date: "2020/5/27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(lme4)
+library(sjPlot)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+
+```
+
+```{r,include=FALSE}
+#########################################
+# load data
+weight_data = read_csv("./data/dataclean.csv",col_types = "ccfdddcdffff") %>% 
+  janitor::clean_names() %>% drop_na(id)
+# View(weight_data)
+# dim(weight_data)
+
+### process data ####
+### data befroe intervention ###
+weight_before = weight_data %>% 
+  filter(tnp == 0 & feeding_tube == 0 & bm_transplant == 0 & l_transplant == 0) %>% 
+  mutate(years = age - first_age) 
+
+weight_before2 = weight_before %>% 
+  select(-dob,-age,-first_age,-dom) %>% 
+  select(id,num_measure,years,weight,everything()) %>% 
+  mutate(years = as.numeric(years),weight = as.numeric(weight)) # id = as character
+
+ids = unique(weight_before2$id)
+# length(ids) # 24 subjects
+### subjuct only have one data before intervention ###
+no_id = data.frame(count(weight_before2, id))  # number of data point before intervention
+no_1 = filter(no_id, n == 1) # 98 only has one data point
+weight_before2 = weight_before2 %>% filter(!(id == 98))  # No.98 is excluded, 23 subjects left
+# View(weight_before2)
+ids = unique(weight_before2$id) #23 subjects
+
+### seperate by id ###
+# Group 1
+weight_before2_c1 = weight_before2 %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+# View(weight_before2_c1)
+# unique(weight_before2_c1$id)
+# Group 2
+weight_before2_c2 = weight_before2 %>%
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200)
+# View(weight_before2_c2)
+# unique(weight_before2_c2$id)
+```
+
+
+## R Markdown
+
