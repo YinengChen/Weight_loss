@@ -3,6 +3,8 @@ title: "Weight3"
 author: "Yineng Chen"
 date: "2020/5/27"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -37,7 +39,7 @@ weight_before = weight_data %>%
   mutate(years = age - first_age) 
 
 weight_before2 = weight_before %>% 
-  select(-dob,-age,-first_age,-dom) %>% 
+  select(-dob,-age,-dom) %>% 
   select(id,num_measure,years,weight,everything()) %>% 
   mutate(years = as.numeric(years),weight = as.numeric(weight)) # id = as character
 
@@ -66,5 +68,276 @@ weight_before2_c2 = weight_before2 %>%
 ```
 
 
-## R Markdown
+## Plots
+
+```{r}
+#####################################################
+# speghetti plot
+
+Weight_plot = ggplot(data = weight_before2, aes(x = years, y = weight, group = id)) +
+  geom_line(aes(color = id)) +
+  geom_point(aes(color = id)) +
+  scale_color_hue(name = "Subjects", h = c(100, 300)) +
+  ggtitle("Weight changes over time (years) for patients in cohort 1 and 2")+ 
+  labs(x = "Time (years)", y = "Weight (kg)")+
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+# individually
+
+# for c1
+#dev.off()
+par(mar = c(4,4,2,2))
+par(mfrow = c(3,3))
+idc1 = unique(weight_before2_c1$id)
+for(i in idc1){
+  df = subset(weight_before2_c1, weight_before2_c1$id == i)
+  plot( df$years, df$weight,main = i , type = "b",
+        xlab = "Time (years)",ylab = "weight (kg)")
+}
+
+
+idc2 = unique(weight_before2_c2$id)
+#par(mar = c(4,4,2,2))
+#par(mfrow = c(3,3))
+for(i in idc2){
+  df = subset(weight_before2_c2, weight_before2_c2$id == i)
+  plot( df$years, df$weight, main = i, 
+        type = "b",xlab = "Time (years)",ylab = "weight (kg)")
+}
+
+```
+
+
+# Base line
+
+```{r}
+## Baseline ############
+first_m <- function(id1) {
+  if (id1 %in% unique(weight_before2$id)){
+    
+  } else {print(paste("Error in best(",id1,", ) : invalid id")) } 
+  
+  data_in = weight_before2 %>% filter(id == id1) %>% 
+    select(id,num_measure,years,weight)
+  first_data = as.numeric(data_in[1,4])
+  first_data
+}
+
+weights = numeric(length = length(ids))
+id = numeric(length = length(ids))
+idx <- 1
+
+for(i in ids){
+  id[idx] <- i
+  weights[idx] <- first_m(i)
+  idx <- idx + 1 
+}
+
+baseline_weight = data.frame(id,weights) %>% mutate(id = as.character(id))
+
+baseline_weight_c1 = baseline_weight %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+
+baseline_weight_c2 = baseline_weight %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200)
+
+f = var.test(baseline_weight_c2$weights,baseline_weight_c1$weights, alternative = "two.sided")
+# F = 1.6988, num df = 8, denom df = 13, p-value = 0.3802
+# Fail to reject the null, evidence that variances are equal.
+t = t.test(baseline_weight_c2$weights,baseline_weight_c1$weights, var.equal= TRUE, paired=FALSE)
+# t = 0.20929, df = 21, p-value = 0.8362
+# the means weight are not sig diff b/w the two groups.
+
+s1 = sqrt(var(baseline_weight_c1$weights))
+s2 = sqrt(var(baseline_weight_c2$weights))
+m1 = mean(baseline_weight_c1$weights)
+m2 = mean(baseline_weight_c2$weights)
+out1 = cbind(m1,m2,t$statistic,t$p.value)
+out2 = cbind(s1,s2,f$statistic,f$p.value)
+out = rbind(out1,out2)
+colnames(out)=c('Group 1','Group 2',"t-statistic","p value")
+rownames(out)=c('Mean Weight(Kg)',"SD")
+# out
+knitr::kable(out, caption = "Mean Body Weight")
+```
+
+```{r}
+## baseline age
+first_a <- function(id1) {
+  if (id1 %in% unique(weight_before2$id)){
+    
+  } else {print(paste("Error in best(",id1,", ) : invalid id")) } 
+  
+  data_in = weight_before2 %>% filter(id == id1) %>% 
+    select(id,first_age)
+  first_data = as.numeric(data_in[1,2])
+  first_data
+}
+
+base_age = numeric(length = length(ids))
+id = numeric(length = length(ids))
+idx <- 1
+
+for(i in ids){
+  id[idx] <- i
+  base_age[idx] <- first_a(i)
+  idx <- idx + 1 
+}
+
+baseline_age = data.frame(id,base_age) %>% mutate(id = as.character(id))
+
+baseline_age_c1 = baseline_age %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+
+baseline_age_c2 = baseline_age %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200)
+
+fa = var.test(baseline_age_c2$base_age,baseline_age_c1$base_age, alternative = "two.sided")
+# F = 3.371, num df = 8, denom df = 13, p-value = 0.05091
+# Fail to reject the null, evidence that variances are equal.
+ta = t.test(baseline_age_c2$base_age,baseline_age_c1$base_age, var.equal= TRUE, paired=FALSE)
+# t = 0.23755, df = 21, p-value = 0.8145
+# the means weight are not sig diff b/w the two groups.
+
+sa1 = sqrt(var(baseline_age_c1$base_age))
+sa2 = sqrt(var(baseline_age_c2$base_age))
+ma1 = mean(baseline_age_c1$base_age)
+ma2 = mean(baseline_age_c2$base_age)
+outa1 = cbind(ma1,ma2,ta$statistic,ta$p.value)
+outa2 = cbind(sa1,sa2,fa$statistic,fa$p.value)
+outa = rbind(outa1,outa2)
+colnames(outa)=c('Group 1','Group 2',"t-statistic","p value")
+rownames(outa)=c('Mean Age',"SD")
+# outa
+knitr::kable(outa, caption = "Mean Age")
+```
+
+
+# Mixed effect models
+
+## cohort 1 and 2 
+
+```{r}
+
+#############################
+#     Mixed effect models   #
+#############################
+
+# FIt a model fot cohort 1 and 2
+mod = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2)
+summary(mod)
+sjPlot::plot_model(mod,
+                   show.values = TRUE, show.p=TRUE,
+                   title ="Weight changes over time (years)")
+sjPlot:: tab_model(mod,show.re.var= F, 
+                  dv.labels= "Weight changes over time (years) in cohort 1 and 2")
+effects_years <- effects::effect(term= "years", mod= mod,xlevels = 27)
+summary(effects_years) 
+# Save the effects values as a df:
+x_years <- as.data.frame(effects_years)
+x_years <- x_years[c(1,9,18,27),]
+years_plot = ggplot() + 
+  #2
+  geom_line(data=weight_before2, aes(x = years, y = weight,group = id,color = id)) + 
+  geom_point(data=weight_before2, aes(x = years, y = weight,group = id,color = id)) + 
+  #3
+  geom_point(data=x_years, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x="Weight changes over time (years) in cohort 1 and 2", y="Weight (kg)")+
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+
+
+
+```
+
+## cohort 1
+
+```{r}
+##########
+# fit a model for cohort 1
+mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c1)
+summary(mod_c1)
+sjPlot::plot_model(mod_c1,
+                   show.values = TRUE, show.p=TRUE,
+                   title ="Weight changes over time (years) in cohort 1")
+sjPlot:: tab_model(mod_c1,show.re.var= F, 
+                   dv.labels= "Weight changes over time (years) in cohort 1")
+effects_years_c1 <- effects::effect(term= "years", mod= mod_c1,xlevels = 27)
+summary(effects_years_c1) 
+# Save the effects values as a df:
+x_years_c1 <- as.data.frame(effects_years)
+x_years_c1 <- x_years_c1[c(1,9,18,27),]
+years_plot_c1 = ggplot() + 
+  #2
+  geom_line(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_point(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  #3
+  geom_point(data=x_years_c1, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years_c1, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years_c1, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x="Weight changes over time (years) in cohort 1", y="Weight (kg)")+
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+## cohort 2
+
+```{r}
+################
+# fit a model for cohort 2
+mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c2)
+summary(mod_c2)
+sjPlot::plot_model(mod_c2,
+                   show.values = TRUE, show.p=TRUE,
+                   title ="Weight changes over time (years)")
+sjPlot:: tab_model(mod_c2,show.re.var= F, 
+                   dv.labels= "Weight changes over time (years) in cohort 2")
+effects_years_c2 <- effects::effect(term= "years", mod= mod_c2,xlevels = 19)
+summary(effects_years_c2) 
+# Save the effects values as a df:
+x_years_c2 <- as.data.frame(effects_years_c2)
+x_years_c2 <- x_years_c2[c(1,5,10,15,18),]
+years_plot_c2   = ggplot() + 
+  #2
+  geom_line(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_point(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) +
+  #3
+  geom_point(data=x_years_c2, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years_c2, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years_c2, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x ="Weight changes over time (years) in cohort 2", y ="Weight (kg)")+
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+# effect of cohort
+
+```{r}
+# A model includs "group"
+
+mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= FALSE, data=weight_before2 )
+summary(mod2)
+sjPlot:: tab_model(mod2,show.re.var= FALSE, 
+                   dv.labels= "Weight change over time (years) in cohort 1 and 2")
+
+
+```
 
