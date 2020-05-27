@@ -107,7 +107,8 @@ mod_sen = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_chunk)
 
 sjPlot:: tab_model(mod_sen,show.re.var= F, 
                    dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 1 and 2")
-effects_years_sen <- effects::effect(term = "years", mod = mod_sen,xlevels = 20)
+effects_years_sen <- effects::effect(term = "years", mod = mod_sen,
+                                     xlevels =20)
 # summary(effects_years_sen) 
 # Save the effects values as a df:
 x_years_sen <- as.data.frame(effects_years_sen)[c(1,4,7,10,13,19),]
