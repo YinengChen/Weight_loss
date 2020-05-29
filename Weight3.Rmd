@@ -229,11 +229,11 @@ knitr::kable(outa, caption = "Mean Age")
 #############################
 
 # FIt a model fot cohort 1 and 2
-mod = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2)
+mod = lme4::lmer(weight ~ years+ (1|id), REML = T, data=weight_before2)
 summary(mod)
 sjPlot::plot_model(mod,
                    show.values = TRUE, show.p=TRUE,
-                   title ="Weight changes over time (years)")
+                   title = "Weight changes over time (years)")
 sjPlot:: tab_model(mod,show.re.var= F, 
                   dv.labels= "Weight changes over time (years) in cohort 1 and 2")
 effects_years <- effects::effect(term= "years", mod = mod, xlevels = list(years = c(0,5,10,15,20,25,27)))
@@ -256,7 +256,7 @@ years_plot = ggplot() +
   theme_bw() + 
   theme(legend.position = "bottom")
 
-
+years_plot
 
 
 ```
@@ -266,7 +266,7 @@ years_plot = ggplot() +
 ```{r}
 ##########
 # fit a model for cohort 1
-mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c1)
+mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_c1)
 summary(mod_c1)
 sjPlot::plot_model(mod_c1,
                    show.values = TRUE, show.p=TRUE,
@@ -300,7 +300,7 @@ years_plot_c1 = ggplot() +
 ```{r}
 ################
 # fit a model for cohort 2
-mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c2)
+mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_c2)
 summary(mod_c2)
 sjPlot::plot_model(mod_c2,
                    show.values = TRUE, show.p=TRUE,
