@@ -1,7 +1,7 @@
 ---
 title: 'Sensitivity Analyses'
 author: "Yineng Chen"
-date: "2020/5/27"
+date: "2020/5/29"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -102,16 +102,16 @@ Weight_plot_ch = ggplot(data = weight_chunk, aes(x = years, y = weight, group = 
        , y = "Weight (kg)")
 
 # fit models
-mod_sen = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_chunk)
+mod_sen = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_chunk)
 # summary(mod_sen)
 
 sjPlot:: tab_model(mod_sen,show.re.var= F, 
                    dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 1 and 2")
 effects_years_sen <- effects::effect(term = "years", mod = mod_sen,
-                                     xlevels =20)
+                                    xlevels = list(years = c(0,5,10,15,19.55)))
 # summary(effects_years_sen) 
 # Save the effects values as a df:
-x_years_sen <- as.data.frame(effects_years_sen)[c(1,4,7,10,13,19),]
+x_years_sen <- as.data.frame(effects_years_sen)
 
 years_plot_sen = ggplot() + 
   #2
@@ -133,7 +133,7 @@ years_plot_sen
 ### Main Analysis Results
 
 ```{r,echo = FALSE}
-mod = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2)
+mod = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2)
 sjPlot:: tab_model(mod,show.re.var= F, 
                   dv.labels= "Weight changes over time (years) in cohort 1 and 2")
 
@@ -154,15 +154,16 @@ Weight_plot_ch1 = ggplot(data = weight_chunk_c1 %>% mutate(id = as.character(id)
   scale_color_hue(name = "Subjects", h = c(100, 300)) +
   labs(x="Sensitivity analysis: Weight changes over time (years) in cohort 1", y="Weight (kg)") 
 
-mod_sen_c1 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_chunk_c1)
+mod_sen_c1 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_chunk_c1)
 # summary(mod_sen_c1)
 
 sjPlot:: tab_model(mod_sen_c1,show.re.var= F, 
                    dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 1")
-effects_years_sen_c1 <- effects::effect(term= "years", mod= mod_sen_c1, xlevels = 18)
+effects_years_sen_c1 <- effects::effect(term= "years", mod = mod_sen_c1, 
+                                    xlevels = list(years = c(0,5,10,15,19.38)))
 # summary(effects_years_sen_c1) 
 # Save the effects values as a df:
-x_years_sen_c1 <- as.data.frame(effects_years_sen_c1)[c(1,3,5,7,9,11,13,15,18),]
+x_years_sen_c1 <- as.data.frame(effects_years_sen_c1)
 
 years_plot_sen_c1 = ggplot() + 
   #2
@@ -184,7 +185,7 @@ years_plot_sen_c1
 ### Main Analysis Results
 
 ```{r,echo = FALSE}
-mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c1)
+mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_c1)
 sjPlot:: tab_model(mod_c1,show.re.var= F, 
                    dv.labels= "Weight changes over time (years) in cohort 1")
 ```
@@ -204,12 +205,12 @@ Weight_plot_ch2 = ggplot(data = weight_chunk_c2 %>% mutate(id = as.character(id)
   labs(x="Sensitivity analysis: Weight changes over time (years) in cohort 2", y="Weight (kg)") 
 
 
-mod_sen_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_chunk_c2)
+mod_sen_c2 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_chunk_c2)
 # summary(mod_sen_c2)
 
 sjPlot:: tab_model(mod_sen_c2,show.re.var= F, 
                    dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 2")
-effects_years_sen_c2 <- effects::effect(term= "years", mod= mod_sen_c2,xlevels = 11)
+effects_years_sen_c2 <- effects::effect(term= "years", mod= mod_sen_c2,xlevels = list(years = c(0,2,4,6,8,11)))
 # summary(effects_years_sen_c2) 
 # Save the effects values as a df:
 x_years_sen_c2 <- as.data.frame(effects_years_sen_c2)
@@ -233,7 +234,7 @@ years_plot_sen_c2
 ### Main Analysis Results
 
 ```{r,echo = FALSE}
-mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= FALSE, data=weight_before2_c2)
+mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_c2)
 sjPlot:: tab_model(mod_c2,show.re.var= F, 
                    dv.labels= "Weight changes over time (years) in cohort 2")
 ```
