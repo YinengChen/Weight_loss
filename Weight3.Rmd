@@ -13,6 +13,7 @@ library(tidyverse)
 library(ggplot2)
 library(lme4)
 library(sjPlot)
+library(arsenal)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -215,6 +216,34 @@ colnames(outa)=c('Group 1','Group 2',"t-statistic","p value")
 rownames(outa)=c('Mean Age',"SD")
 # outa
 knitr::kable(outa, caption = "Mean Age")
+```
+
+```{r}
+baseline = read_csv("./data/baseline.csv",col_types = "cfdd") %>% 
+  janitor::clean_names() %>% drop_na(id)
+
+baseline <- baseline %>% 
+  mutate(cohort=factor(cohort, labels=c("cohort 1","cohort 2")))
+# First table - not ideal
+my_labels <- list(age = "Age (years)", weight = "Weight(kg)", cohort ="Cohort")
+
+my_controls <- tableby.control(
+  total = T,
+  test= T,  # No test p-values yet
+  numeric.stats = c("meansd", "medianq1q3", "range", "Nmiss2"),
+  cat.stats = c("countpct", "Nmiss2"),
+  stats.labels = list(
+    meansd = "Mean (SD)",
+    medianq1q3 = "Median (Q1, Q3)",
+    range = "Min - Max",
+    Nmiss2 = "Missing",
+    countpct = "N (%)"))
+
+tab1 <- tableby(cohort ~ age + weight , data=baseline, control=my_controls)  
+
+summary(tab1,title = "Descriptive Statistics at baseline", labelTranslations = my_labels, text=T)
+
+
 ```
 
 
