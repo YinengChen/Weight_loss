@@ -246,7 +246,7 @@ The difference in weight loss between the natural history and non-natural histor
 ```{r,echo = FALSE}
 # A model includs "group"
 
-mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= FALSE, data=weight_before2 )
+mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= T, data=weight_before2 )
 # summary(mod2)
 sjPlot:: tab_model(mod2,show.re.var= FALSE, 
                    dv.labels= "Weight change over time (years) in cohort 1 and 2")
