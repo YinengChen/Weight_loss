@@ -7,7 +7,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-dataclean3.csv contains data from patients order than 18
+dataclean3.csv contains data from patients older than 18
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
