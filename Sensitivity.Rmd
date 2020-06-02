@@ -542,12 +542,85 @@ years_plot_sen_adult
 
 ```
 
-### Main Analysis Results
+
+## cohort 1
+
+In this model, data from cohort 1 were used. Data collected after the 20th year of follow up were excluded.
+
+### Sensitivity Analysis Results
 
 ```{r,echo = FALSE}
-mod_adult = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_adult)
+Weight_plot_ch1_adult = ggplot(data = weight_chunk_c1_adult %>% mutate(id = as.character(id)), aes(x = years, y = weight, group = id)) +
+  geom_line(aes(color = id)) +
+  geom_point(aes(color = id)) +
+  scale_color_hue(name = "Subjects", h = c(100, 300)) +
+  labs(x="Sensitivity analysis: Weight changes over time (years) in cohort 1", y="Weight (kg)") 
 
-sjPlot:: tab_model(mod_adult,show.re.var= F, 
-                  dv.labels = "Weight changes over time (years) in cohort 1 and 2")
+mod_sen_c1_adult = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_chunk_c1_adult)
+# summary(mod_sen_c1_adult)
 
+sjPlot:: tab_model(mod_sen_c1_adult,show.re.var= F, 
+                   dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 1")
+effects_years_sen_c1_adult <- effects::effect(term= "years", mod = mod_sen_c1_adult, 
+                                    xlevels = list(years = c(0,5,10,15,19.38)))
+# summary(effects_years_sen_c1_adult) 
+# Save the effects values as a df:
+x_years_sen_c1_adult <- as.data.frame(effects_years_sen_c1_adult)
+
+years_plot_sen_c1_adult = ggplot() + 
+  #2
+  geom_point(data=weight_chunk_c1_adult %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_line(data=weight_chunk_c1_adult %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  #3
+  geom_point(data=x_years_sen_c1_adult, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years_sen_c1_adult, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years_sen_c1_adult, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x="Sensitivity analysis: Weight changes over time (years) in cohort 1", y="Weight (kg)") 
+
+
+years_plot_sen_c1_adult
 ```
+
+
+## cohort 2
+
+In this model，data from cohort 2 were used. Data collected after the 11th year of follow up were excluded.
+
+```{r,echo = FALSE}
+# cohort 2
+Weight_plot_ch2_adult = ggplot(data = weight_chunk_c2_adult %>% mutate(id = as.character(id)), aes(x = years, y = weight, group = id)) +
+  geom_line(aes(color = id)) +
+  geom_point(aes(color = id)) +
+  scale_color_hue(name = "Subjects", h = c(100, 300)) +
+  labs(x="Sensitivity analysis: Weight changes over time (years) in cohort 2", y="Weight (kg)") 
+
+
+mod_sen_c2_adult = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_chunk_c2_adult)
+# summary(mod_sen_c2_adult)
+
+sjPlot:: tab_model(mod_sen_c2_adult,show.re.var= F, 
+                   dv.labels= "Sensitivity analysis: Weight changes over time (years) in cohort 2")
+effects_years_sen_c2_adult <- effects::effect(term= "years", mod= mod_sen_c2_adult, xlevels = list(years = c(0,2,4,6,8,11)))
+# summary(effects_years_sen_c2_adult) 
+# Save the effects values as a df:
+x_years_sen_c2_adult <- as.data.frame(effects_years_sen_c2_adult)
+
+years_plot_sen_c2_adult = ggplot() + 
+  #2
+  geom_point(data=weight_chunk_c2_adult %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_line(data=weight_chunk_c2_adult %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  #3
+  geom_point(data=x_years_sen_c2_adult, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years_sen_c2_adult, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years_sen_c2_adult, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x="Sensitivity analysis: Weight changes over time (years) in cohort 2", y="Weight (kg)") 
+
+years_plot_sen_c2_adult
+```
+
