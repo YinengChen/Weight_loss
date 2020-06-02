@@ -1,0 +1,299 @@
+---
+title: "Sensitivity_Analysis_3"
+author: "Yineng Chen"
+date: "2020/6/2"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(lme4)
+library(sjPlot)
+library(arsenal)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+
+```
+
+
+
+Data from 11 patients who have treatment intervention were removed. 
+Data from the remaining 23 patients including those who were younger than 18 at baseline were analyzed using mixed-effect models which assume that weight change is linear over time.
+
+
+```{r,include=FALSE}
+#########################################
+# load data
+weight_data = read_csv("./data/dataclean2.csv",col_types = "ccfdddcdffff") %>% 
+  janitor::clean_names() %>% drop_na(id)
+# View(weight_data)
+# dim(weight_data)
+
+### process data ####
+### data befroe intervention ###
+weight_before = weight_data %>% 
+  filter(tnp == 0 & feeding_tube == 0 & bm_transplant == 0 & l_transplant == 0) %>% 
+  mutate(years = age - first_age) 
+
+weight_before2 = weight_before %>% 
+  select(-dob,-age,-dom) %>% 
+  select(id,num_measure,years,weight,everything()) %>% 
+  mutate(years = as.numeric(years),weight = as.numeric(weight)) # id = as character
+
+ids = unique(weight_before2$id)
+# length(ids) # 24 subjects
+### subjuct only have one data before intervention ###
+no_id = data.frame(count(weight_before2, id))  # number of data point before intervention
+no_1 = filter(no_id, n == 1) # 98 only has one data point
+weight_before2 = weight_before2 %>% filter(!(id == 98))  # No.98 is excluded, 23 subjects left
+# View(weight_before2)
+ids = unique(weight_before2$id) #23 subjects
+
+### seperate by id ###
+# Group 1
+weight_before2_c1 = weight_before2 %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+# View(weight_before2_c1)
+# unique(weight_before2_c1$id)
+# Group 2
+weight_before2_c2 = weight_before2 %>%
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200)
+# View(weight_before2_c2)
+# unique(weight_before2_c2$id)
+```
+
+
+## Plots
+
+```{r,echo = FALSE}
+#####################################################
+# speghetti plot
+
+Weight_plot = ggplot(data = weight_before2, aes(x = years, y = weight, group = id)) +
+  geom_line(aes(color = id)) +
+  geom_point(aes(color = id)) +
+  scale_color_hue(name = "Subjects", h = c(100, 300)) +
+  ggtitle("Weight changes over time (years) for patients in cohort 1 and 2")+ 
+  labs(x = "Time (years)", y = "Weight (kg)")+
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+# individually
+
+# for c1
+#dev.off()
+par(mar = c(4,4,2,2))
+par(mfrow = c(3,3))
+idc1 = unique(weight_before2_c1$id)
+for(i in idc1){
+  df = subset(weight_before2_c1, weight_before2_c1$id == i)
+  plot( df$years, df$weight,main = i , type = "b",
+        xlab = "Time (years)",ylab = "weight (kg)")
+}
+
+
+idc2 = unique(weight_before2_c2$id)
+#par(mar = c(4,4,2,2))
+#par(mfrow = c(3,3))
+for(i in idc2){
+  df = subset(weight_before2_c2, weight_before2_c2$id == i)
+  plot( df$years, df$weight, main = i, 
+        type = "b",xlab = "Time (years)",ylab = "weight (kg)")
+}
+
+Weight_plot
+```
+
+
+# Baseline
+
+```{r,echo = FALSE}
+baseline = read_csv("./data/baseline2.csv",col_types = "cfdd") %>% 
+  janitor::clean_names() %>% drop_na(id)
+
+baseline <- baseline %>% 
+  mutate(cohort=factor(cohort, labels=c("cohort 1","cohort 2")))
+# First table 
+my_labels <- list(age = "Age (years)", weight = "Weight(kg)", cohort ="Cohort")
+
+my_controls <- tableby.control(
+  total = T,
+  test= T,  # No test p-values yet
+  numeric.stats = c("meansd", "medianq1q3", "range", "Nmiss2"),
+  cat.stats = c("countpct", "Nmiss2"),
+  stats.labels = list(
+    meansd = "Mean (SD)",
+    medianq1q3 = "Median (Q1, Q3)",
+    range = "Min - Max",
+    Nmiss2 = "Missing",
+    countpct = "N (%)"))
+
+tab1 <- tableby(cohort ~ age + weight , data=baseline, control=my_controls)  
+
+summary(tab1,title = "Descriptive Statistics at baseline", labelTranslations = my_labels, text=T)
+
+```
+
+
+# Mixed effect models
+
+## cohort 1 and 2 
+
+The weight loss rate in all 23 MNGIE patients is 0.82 kg/year (n=23, SE=0.09). 
+
+
+```{r,echo = FALSE}
+
+#############################
+#     Mixed effect models   #
+#############################
+
+# FIt a model fot cohort 1 and 2
+mod = lme4::lmer(weight ~ years+ (1|id), REML = T, data=weight_before2)
+# summary(mod)
+# sjPlot::plot_model(mod,
+#                   show.values = TRUE, show.p=TRUE,
+#                   title = "Weight changes over time (years)")
+sjPlot:: tab_model(mod,show.re.var= F, 
+                  dv.labels= "Weight changes over time (years) in cohort 1 and 2")
+effects_years <- effects::effect(term= "years", mod = mod, xlevels = list(years = c(0,5,10,15,20,25,27)))
+# summary(effects_years) 
+# Save the effects values as a df:
+x_years <- as.data.frame(effects_years)
+
+years_plot = ggplot() + 
+  #2
+  geom_line(data=weight_before2, aes(x = years, y = weight,group = id,color = id)) + 
+  geom_point(data=weight_before2, aes(x = years, y = weight,group = id,color = id)) + 
+  #3
+  geom_point(data=x_years, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x="Weight changes over time (years) in cohort 1 and 2", y="Weight (kg)")
+
+years_plot
+
+
+```
+
+## cohort 1
+
+The weight loss rate in non-natural history study patients is 0.85 kg/year  (n=14, SE= 0.08).
+
+
+```{r,echo = FALSE}
+##########
+# fit a model for cohort 1
+mod_c1 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_c1)
+# summary(mod_c1)
+# sjPlot::plot_model(mod_c1,
+#                   show.values = TRUE, show.p=TRUE,
+#                   title ="Weight changes over time (years) in cohort 1")
+sjPlot:: tab_model(mod_c1,show.re.var= F, 
+                   dv.labels= "Weight changes over time (years) in cohort 1")
+effects_years_c1 <- effects::effect(term= "years", mod= mod_c1,xlevels = list(years = c(0,5,10,15,20,25,27)))
+# summary(effects_years_c1) 
+# Save the effects values as a df:
+x_years_c1 <- as.data.frame(effects_years_c1)
+
+years_plot_c1 = ggplot() + 
+  #2
+  geom_line(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_point(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  #3
+  geom_point(data=x_years_c1, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years_c1, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years_c1, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x="Weight changes over time (years) in cohort 1", y="Weight (kg)")
+
+years_plot_c1
+```
+
+
+## cohort 2
+
+The weight loss rate in natural history study MNGIE patients is 0.69 kg/year (n=9, SE= 0.22).
+
+
+```{r,echo = FALSE}
+################
+# fit a model for cohort 2
+mod_c2 = lme4::lmer(weight ~ years+ (1|id),REML= T, data=weight_before2_c2)
+# summary(mod_c2)
+# sjPlot::plot_model(mod_c2,
+#                    show.values = TRUE, show.p=TRUE,
+#                    title ="Weight changes over time (years)")
+sjPlot:: tab_model(mod_c2,show.re.var= F, 
+                   dv.labels= "Weight changes over time (years) in cohort 2")
+effects_years_c2 <- effects::effect(term= "years", mod= mod_c2,xlevels = list(years = c(0,5,10,15,19.55)))
+# summary(effects_years_c2) 
+# Save the effects values as a df:
+x_years_c2 <- as.data.frame(effects_years_c2)
+
+years_plot_c2   = ggplot() + 
+  #2
+  geom_line(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_point(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) +
+  #3
+  geom_point(data=x_years_c2, aes(x=years, y=fit), color="blue") +
+  #4
+  geom_line(data=x_years_c2, aes(x=years, y=fit), color="blue") +
+  #5
+  geom_ribbon(data= x_years_c2, aes(x=years, ymin=lower, ymax=upper), alpha= 0.3, fill="blue") +
+  #6
+  labs(x ="Weight changes over time (years) in cohort 2", y ="Weight (kg)")+
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+years_plot_c2 
+```
+
+# effect of cohort
+
+The difference in weight loss between the natural history and non-natural history patients is not significant (p=0.69).
+
+
+```{r,echo = FALSE}
+# A model includs "group"
+
+mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= FALSE, data=weight_before2 )
+# summary(mod2)
+sjPlot:: tab_model(mod2,show.re.var= FALSE, 
+                   dv.labels= "Weight change over time (years) in cohort 1 and 2")
+
+
+```
+
+
+# truncated models for all patients
+
+```{r, include=False}
+# truncated data
+
+weight_chunk = weight_before2 %>% filter(years <= 20)
+# view(weight_chunk)
+weight_chunk_c1 = weight_chunk %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+weight_chunk_c2 = weight_chunk %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200) %>% 
+  filter(years <= 11)
+```
