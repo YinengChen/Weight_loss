@@ -220,14 +220,16 @@ rownames(outa)=c('Mean Age',"SD")
 knitr::kable(outa, caption = "Mean Age")
 ```
 
-```{r}
-baseline = read_csv("./data/baseline3.csv",col_types = "cfdd") %>% 
+```{r results= "asis", echo = FALSE}
+baseline = read_csv("./data/baseline3.csv",col_types = "cfddffff") %>% 
   janitor::clean_names() %>% drop_na(id)
 
 baseline <- baseline %>% 
-  mutate(cohort=factor(cohort, labels=c("cohort 1","cohort 2")))
+  mutate(cohort=factor(cohort, labels=c("cohort 1","cohort 2"))) %>% 
+  mutate(gender = factor(gender, labels = c("Female","Male")))
 # First table 
-my_labels <- list(age = "Age (years)", weight = "Weight(kg)", cohort ="Cohort")
+my_labels <- list(age = "Age (years)", weight = "Weight(kg)", cohort ="Cohort",gender = "Gender", ethnicity = "Ethnicity", race = "Race", 
+                  country_of_origin = "Country")
 
 my_controls <- tableby.control(
   total = T,
@@ -241,7 +243,7 @@ my_controls <- tableby.control(
     Nmiss2 = "Missing",
     countpct = "N (%)"))
 
-tab1 <- tableby(cohort ~ age + weight , data=baseline, control=my_controls)  
+tab1 <- tableby(cohort ~ age + weight + gender + ethnicity + country_of_origin + race , data=baseline, control=my_controls)  
 
 summary(tab1,title = "Descriptive Statistics at baseline", labelTranslations = my_labels, text=T)
 
@@ -253,7 +255,7 @@ summary(tab1,title = "Descriptive Statistics at baseline", labelTranslations = m
 
 ## cohort 1 and 2 
 
-```{r}
+```{r，echo = FALSE}
 
 #############################
 #     Mixed effect models   #
@@ -273,9 +275,9 @@ summary(effects_years)
 x_years <- as.data.frame(effects_years)
 
 years_plot = ggplot() + 
-  #2
-  geom_line(data=weight_before2, aes(x = years, y = weight,group = id,color = id)) + 
-  geom_point(data=weight_before2, aes(x = years, y = weight,group = id,color = id)) + 
+  #2 ,color = id
+  geom_line(data=weight_before2, aes(x = years, y = weight,group = id)，color = "grey") + 
+  geom_point(data=weight_before2, aes(x = years, y = weight,group = id)，color = "grey") + 
   #3
   geom_point(data=x_years, aes(x=years, y=fit), color="blue") +
   #4
@@ -311,8 +313,8 @@ x_years_c1 <- as.data.frame(effects_years_c1)
 
 years_plot_c1 = ggplot() + 
   #2
-  geom_line(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
-  geom_point(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
+  geom_line(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id)，color = "grey") + 
+  geom_point(data=weight_before2_c1 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id)，color = "grey") + 
   #3
   geom_point(data=x_years_c1, aes(x=years, y=fit), color="blue") +
   #4
@@ -347,8 +349,8 @@ x_years_c2 <- as.data.frame(effects_years_c2)
 
 years_plot_c2   = ggplot() + 
   #2
-  geom_line(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) + 
-  geom_point(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id,color = id)) +
+  geom_line(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id)，color = "grey") + 
+  geom_point(data=weight_before2_c2 %>% mutate(id = as.character(id)), aes(x = years, y = weight,group = id)，color = "grey") +
   #3
   geom_point(data=x_years_c2, aes(x=years, y=fit), color="blue") +
   #4
@@ -368,7 +370,7 @@ years_plot_c2
 ```{r}
 # A model includs "group"
 
-mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= FALSE, data=weight_before2 )
+mod2 = lme4::lmer(weight ~ years+ group+ (1|id),REML= T, data=weight_before2 )
 summary(mod2)
 sjPlot:: tab_model(mod2,show.re.var= FALSE, 
                    dv.labels= "Weight change over time (years) in cohort 1 and 2")
@@ -376,4 +378,22 @@ sjPlot:: tab_model(mod2,show.re.var= FALSE,
 
 ```
 
+
+# effect of age at baseline
+
+```{r, echo= FALSE}
+# turn age into categorical variabe
+
+baseline$age_cate = cut(baseline$age,c(min(baseline$age),mean(baseline$age),max(baseline$age)+1),right = F,labels = c(1:2))
+
+weight_before2$age_cate =cut(weight_before2$first_age,c(min(weight_before2$first_age),mean(weight_before2$first_age),max(weight_before2$first_age)+1),right = F,labels = c(1:2))
+
+mod3 = lme4::lmer(weight ~ years+ age_cate + (1|id),REML= T, data=weight_before2 )
+summary(mod3)
+sjPlot:: tab_model(mod3,show.re.var= FALSE, 
+                   dv.labels= "Effect of age (years) at baseline on body weight")
+
+
+
+```
 
