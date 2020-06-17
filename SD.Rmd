@@ -1,0 +1,102 @@
+---
+title: "SD"
+author: "Yineng Chen"
+date: "6/17/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(data.table)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+
+```
+
+```{r}
+# load data
+weight_data = read_csv("./data/dataclean3.csv",col_types = "ccfdddcdffff") %>% 
+  janitor::clean_names() %>% drop_na(id)
+# View(weight_data)
+# dim(weight_data)
+
+### process data ####
+### data befroe intervention ###
+weight_before = weight_data %>% 
+  filter(tnp == 0 & feeding_tube == 0 & bm_transplant == 0 & l_transplant == 0) %>% 
+  mutate(years = age - first_age) 
+
+weight_before2 = weight_before %>% 
+  select(-dob,-age,-dom) %>% 
+  select(id,num_measure,years,weight,everything()) %>% 
+  mutate(years = as.numeric(years),weight = as.numeric(weight)) # id = as character
+
+ids = unique(weight_before2$id)
+# length(ids) # 22 subjects
+
+### subjuct only have one data before intervention ###
+no_id = data.frame(count(weight_before2, id))  # number of data point before intervention
+no_1 = filter(no_id, n == 1) # 98 only has one data point
+weight_before2 = weight_before2 %>% filter(!(id == 98))  # No.98 is excluded, 23 subjects left
+# View(weight_before2)
+ids = unique(weight_before2$id) #21 subjects
+
+### seperate by id ###
+# Group 1
+weight_before2_c1 = weight_before2 %>% 
+  mutate(id = as.numeric(id)) %>% 
+  filter(id < 200)
+# View(weight_before2_c1)
+# unique(weight_before2_c1$id)
+
+# Group 2
+weight_before2_c2 = weight_before2 %>%
+  mutate(id = as.numeric(id)) %>% 
+  filter(id > 200)
+# View(weight_before2_c2)
+# unique(weight_before2_c2$id)
+```
+
+
+```{r}
+# transform into dt
+weightDT = as.data.table(weight_before2)
+weightDT = weightDT[,id:= as.character(id)]
+
+# subsetting
+changeDT = weightDT[,.(id,num_measure,years,weight)]
+
+# choose first and last 
+setkey(changeDT , id)
+firstDT = changeDT[J(unique(id)), mult = "first"]
+setnames(firstDT ,c("num_measure","years","weight"),
+         c("first_m","first_y","first_w"))
+
+lastDT = changeDT[J(unique(id)), mult = "last"]
+setnames(lastDT ,c("num_measure","years","weight"),
+         c("last_m","last_y","last_w"))
+
+# merge DT
+change2DT = merge.data.table(firstDT,lastDT,by = "id")[,.(id,first_w,last_w,last_y)]
+
+# calculate the rate of change
+change2DT[,rate := (last_w - first_w)/last_y]
+
+# calculate sd
+SD = sd(change2DT[,rate])
+```
+
+
+
